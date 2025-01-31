@@ -179,8 +179,6 @@ invio.addEventListener("click", function () {
   generateChart(sheetData.jsonData, chartType);
 });
 
-reader.readAsArrayBuffer(file); // Leer el archivo como buffer
-
 // Función para mostrar datos en la página
 
 function displayData(data) {
