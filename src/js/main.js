@@ -33,74 +33,156 @@ archivoXLSL.addEventListener("change", function (event) {
   const file = event.target.files[0];
   if (!file) return;
 
+  // leer la estension del file
+
+  const fileName = file.name.toLowerCase();
+  const fileExtension = fileName.split(".").pop();
+
   const reader = new FileReader();
 
   reader.onload = function (e) {
-    const data = new Uint8Array(e.target.result); // archivo en formato binario
-    const excel = XLSX.read(data, { type: "array" }); // Leer el contenido del archivo Excel
-    const sheetLength = excel.SheetNames;
+    const fileData = e.target.result;
 
-    // Agregar opciones al select
-    selectHoja.innerHTML = ""; // Limpiar opciones anteriores
-    sheetLength.forEach((sheetName) => {
-      const option = document.createElement("option");
-      option.classList.add("px-1");
-      option.value = sheetName;
-      option.textContent = sheetName;
-      selectHoja.appendChild(option);
-    });
-
-    // Manejar el cambio de selección y la visualización de los datos
-
-    let sheetData = {};
-
-    // Función para obtener los datos de la hoja
-    function getSheetData() {
-      const selectedSheet = selectHoja.value;
-      const sheet = excel.Sheets[selectedSheet];
-      const jsonData = XLSX.utils.sheet_to_json(sheet);
-      return { selectedSheet, sheet, jsonData };
+    if (fileExtension === "csv") {
+      readCSV(fileData);
+    } else if (fileExtension === "xls" || fileExtension === "xlsx") {
+      readExcel(fileData);
+    } else if (fileExtension === "xml") {
+      readXML(fileData);
+    } else {
+      alert("Formato del file non compatibile. Usa CSV , Excel o XML.");
     }
-
-    visual.addEventListener("click", function () {
-      sheetData = getSheetData();
-      displayData(sheetData.jsonData);
-
-      console.log(sheetData.jsonData[0]);
-
-      const headers =
-        sheetData.jsonData.length > 0 ? Object.keys(sheetData.jsonData[0]) : [];
-
-      AsseX1.innerHTML = "";
-      headers.forEach((header) => {
-        const option = document.createElement("option");
-        option.classList.add("px-1");
-        option.value = header;
-        option.textContent = header;
-        AsseX1.appendChild(option);
-      });
-
-      AsseY1.innerHTML = "";
-      headers.forEach((header) => {
-        const option = document.createElement("option");
-        option.classList.add("px-1");
-        option.value = header;
-        option.textContent = header;
-        AsseY1.appendChild(option);
-      });
-    });
-
-    invio.addEventListener("click", function () {
-      const chartType = document.getElementById("chartType").value; // Obtener el tipo de gráfico actual
-      sheetData = getSheetData();
-      generateChart(sheetData.jsonData, chartType);
-    });
   };
 
-  reader.readAsArrayBuffer(file); // Leer el archivo como buffer
+  if (fileExtension === "csv" || fileExtension === "xml") {
+    reader.readAsText(file); // Leer CSV como texto
+  } else {
+    reader.readAsArrayBuffer(file); // Leer Excel como ArrayBuffer
+  }
 });
 
+// de CSV a JSON
+function readCSV(csvData) {
+  Papa.parse(csvData, {
+    header: true,
+    skipEmptyLines: true,
+    //dynamicTyping: false, // No convierte automáticamente
+    complete: function (result) {
+      const jsonData = result.data.map((row) => {
+        Object.keys(row).forEach((key) => {
+          if (typeof row[key] === "string" && row[key].includes(",")) {
+            row[key] = parseFloat(row[key].replace(".", "").replace(",", "."));
+          }
+        });
+        return row;
+      });
+
+      console.log("CSV convertido a JSON:", jsonData);
+
+      visual.addEventListener("click", function () {
+        displayData(jsonData);
+        addColumnNamesToSelect(jsonData);
+      });
+    },
+  });
+}
+
+// de EXCEL a JSON
+function readExcel(excelData) {
+  const data = new Uint8Array(excelData);
+  const excel = XLSX.read(data, { type: "array" });
+  const sheetLength = excel.SheetNames;
+
+  // Agregar opciones al select
+  selectHoja.innerHTML = ""; // Limpiar opciones anteriores
+  sheetLength.forEach((sheetName) => {
+    const option = document.createElement("option");
+    option.classList.add("px-1");
+    option.value = sheetName;
+    option.textContent = sheetName;
+    selectHoja.appendChild(option);
+  });
+}
+
+function loadSheetData(sheetName, sheetLength) {
+  // Función para obtener los datos de la hoja
+  //const selectedSheet = selectHoja.value;
+  const sheet = sheetLength.Sheets[sheetName];
+  const jsonData = XLSX.utils.sheet_to_json(sheet, { raw: false });
+  //return { selectedSheet, sheet, jsonData };
+
+  console.log(`Hoja "${sheetName}" convertida a JSON:`, jsonData);
+
+  visual.addEventListener("click", function () {
+    displayData(jsonData);
+    addColumnNamesToSelect(jsonData);
+  });
+}
+
+// de XML a JSON
+function readXML(xmlData) {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlData, "text/xml");
+
+  const firstRow = xmlDoc.getElementsByTagName("*")[1]; // Primera fila de datos
+  const headers = Array.from(firstRow.children).map((node) => node.nodeName);
+
+  const jsonData = Array.from(
+    xmlDoc.getElementsByTagName(firstRow.nodeName)
+  ).map((row) => {
+    const obj = {};
+    headers.forEach((header) => {
+      obj[header] = row.getElementsByTagName(header)[0]?.textContent || "";
+    });
+    return obj;
+  });
+
+  console.log("XML convertido a JSON:", jsonData);
+
+  visual.addEventListener("click", function () {
+    displayData(jsonData);
+    addColumnNamesToSelect(jsonData);
+  });
+}
+
+function addColumnNamesToSelect(jsonData) {
+  if (!jsonData || jsonData.length === 0) return;
+
+  const headers = Object.keys(jsonData[0]); // Obtener nombres de columnas
+
+  AsseX1.innerHTML = "";
+  AsseY1.innerHTML = "";
+
+  headers.forEach((header) => {
+    const optionX = document.createElement("option");
+    optionX.classList.add("px-1");
+    optionX.value = header;
+    optionX.textContent = header;
+    AsseX1.appendChild(optionX);
+
+    const optionY = document.createElement("option");
+    optionY.classList.add("px-1");
+    optionY.value = header;
+    optionY.textContent = header;
+    AsseY1.appendChild(optionY);
+  });
+}
+
+let sheetData = {};
+
+invio.addEventListener("click", function () {
+  const chartType = document.getElementById("chartType").value; // Obtener el tipo de gráfico actual
+  if (!sheetData || !sheetData.jsonData || sheetData.jsonData.length === 0) {
+    alert("Seleziona un file válido prima di creare un grafico.");
+    return;
+  }
+  generateChart(sheetData.jsonData, chartType);
+});
+
+reader.readAsArrayBuffer(file); // Leer el archivo como buffer
+
 // Función para mostrar datos en la página
+
 function displayData(data) {
   const output = document.getElementById("output");
   output.innerHTML = ""; // Limpiar contenido anterior
