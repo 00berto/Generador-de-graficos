@@ -1,0 +1,32 @@
+@import "bootstrap/scss/bootstrap";
+// Variables de Bootstrap (opcional)
+$theme-colors: (
+  "primary": #007bff,
+  "secondary": #6c757d,
+  "success": #198754,
+  "danger": #dc3545,
+  "warning": #ffc107,
+  "info": #0d6efd,
+  "light": #f8f9fa,
+  "dark": #212529,
+);
+
+body {
+  font-family: "Lato", sans-serif;
+}
+
+button,
+option,
+.btn {
+  font-family: "Montserrat", sans-serif !important;
+}
+
+.aberto a {
+  font-family: "Roboto", sans-serif;
+  text-decoration: none;
+  color: #212529;
+}
+.link:hover {
+  color: rgb(21, 96, 130);
+  padding-left: 0.5rem;
+}
