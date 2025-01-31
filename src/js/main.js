@@ -61,31 +61,40 @@ archivoXLSL.addEventListener("change", function (event) {
   }
 });
 
+let DataGlobal = []; // Variable global para almacenar los datos
+let fileType = "";
+
 // de CSV a JSON
+
 function readCSV(csvData) {
   Papa.parse(csvData, {
     header: true,
     skipEmptyLines: true,
-    //dynamicTyping: false, // No convierte automáticamente
     complete: function (result) {
-      const jsonData = result.data.map((row) => {
+      fileType = "CSV";
+      DataGlobal = result.data.map((row) => {
         Object.keys(row).forEach((key) => {
           if (typeof row[key] === "string" && row[key].includes(",")) {
-            row[key] = parseFloat(row[key].replace(".", "").replace(",", "."));
+            row[key] = parseFloat(row[key].replace(".", "").replace(",", ".")); // Formateo de números
           }
         });
         return row;
       });
 
-      console.log("CSV convertido a JSON:", jsonData);
-
-      visual.addEventListener("click", function () {
-        displayData(jsonData);
-        addColumnNamesToSelect(jsonData);
-      });
+      console.log("CSV convertido a JSON:", DataGlobal);
     },
   });
 }
+/*
+visual.addEventListener("click", function () {
+  if (csvDataGlobal.length === 0) {
+    alert("Non ci sono dati caricati");
+    return;
+  }
+  displayData(csvDataGlobal);
+  addColumnNamesToSelect(csvDataGlobal);
+  });
+*/
 
 // de EXCEL a JSON
 function readExcel(excelData) {
@@ -102,22 +111,25 @@ function readExcel(excelData) {
     option.textContent = sheetName;
     selectHoja.appendChild(option);
   });
-}
 
-function loadSheetData(sheetName, sheetLength) {
-  // Función para obtener los datos de la hoja
-  //const selectedSheet = selectHoja.value;
+  fileType = "EXCEL";
+
   const sheet = sheetLength.Sheets[sheetName];
-  const jsonData = XLSX.utils.sheet_to_json(sheet, { raw: false });
-  //return { selectedSheet, sheet, jsonData };
+  DataGlobal = XLSX.utils.sheet_to_json(sheet, { raw: false });
 
-  console.log(`Hoja "${sheetName}" convertida a JSON:`, jsonData);
-
-  visual.addEventListener("click", function () {
-    displayData(jsonData);
-    addColumnNamesToSelect(jsonData);
-  });
+  console.log(`Hoja "${sheetName}" convertida a JSON:`, DataGlobal);
 }
+
+/*
+  displayData(jsonData);
+  addColumnNamesToSelect(jsonData);
+
+
+visual.addEventListener("click", function () {
+  const selectedSheet = selectHoja.value; 
+  loadSheetData(selectedSheet, excel);
+});
+*/
 
 // de XML a JSON
 function readXML(xmlData) {
@@ -126,23 +138,24 @@ function readXML(xmlData) {
 
   const firstRow = xmlDoc.getElementsByTagName("*")[1]; // Primera fila de datos
   const headers = Array.from(firstRow.children).map((node) => node.nodeName);
+  fileType = "XML";
 
-  const jsonData = Array.from(
-    xmlDoc.getElementsByTagName(firstRow.nodeName)
-  ).map((row) => {
-    const obj = {};
-    headers.forEach((header) => {
-      obj[header] = row.getElementsByTagName(header)[0]?.textContent || "";
-    });
-    return obj;
-  });
+  DataGlobal = Array.from(xmlDoc.getElementsByTagName(firstRow.nodeName)).map(
+    (row) => {
+      const obj = {};
+      headers.forEach((header) => {
+        obj[header] = row.getElementsByTagName(header)[0]?.textContent || "";
+      });
+      return obj;
+    }
+  );
 
-  console.log("XML convertido a JSON:", jsonData);
-
+  console.log("XML convertido a JSON:", DataGlobal);
+  /*
   visual.addEventListener("click", function () {
     displayData(jsonData);
     addColumnNamesToSelect(jsonData);
-  });
+  });*/
 }
 
 function addColumnNamesToSelect(jsonData) {
@@ -179,8 +192,19 @@ invio.addEventListener("click", function () {
   generateChart(sheetData.jsonData, chartType);
 });
 
-// Función para mostrar datos en la página
+visual.addEventListener("click", function () {
+  if (DataGlobal.length === 0) {
+    alert("No hay datos cargados. Por favor, carga un archivo.");
+    return;
+  }
 
+  displayData(DataGlobal); // Muestra los datos en la página
+  addColumnNamesToSelect(DataGlobal); // Carga los nombres de columnas en los <select>
+
+  console.log(`Datos mostrados desde un archivo ${fileType}`);
+});
+
+// Función para mostrar datos en la página
 function displayData(data) {
   const output = document.getElementById("output");
   output.innerHTML = ""; // Limpiar contenido anterior
