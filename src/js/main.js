@@ -7,10 +7,12 @@ const progressBar = document.getElementById("progressBar");
 const selectHoja = document.getElementById("selectHoja");
 const AsseX1 = document.getElementById("asseX1");
 const AsseY1 = document.getElementById("asseY1");
-const chartType = document.getElementById("chartType").value;
 const download = document.getElementById("download");
 
-archivoXLSL.addEventListener("change", () => {
+archivoXLSL.addEventListener("change", function (event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
   // Mostrar la barra de progreso
   progressBar.style.display = "block";
 
@@ -26,15 +28,8 @@ archivoXLSL.addEventListener("change", () => {
       console.log("Archivo cargado exitosamente");
     }
   }, 500);
-});
-
-// Evento para leer el archivo Excel al seleccionarlo
-archivoXLSL.addEventListener("change", function (event) {
-  const file = event.target.files[0];
-  if (!file) return;
 
   // leer la estension del file
-
   const fileName = file.name.toLowerCase();
   const fileExtension = fileName.split(".").pop();
 
@@ -85,16 +80,6 @@ function readCSV(csvData) {
     },
   });
 }
-/*
-visual.addEventListener("click", function () {
-  if (csvDataGlobal.length === 0) {
-    alert("Non ci sono dati caricati");
-    return;
-  }
-  displayData(csvDataGlobal);
-  addColumnNamesToSelect(csvDataGlobal);
-  });
-*/
 
 // de EXCEL a JSON
 function readExcel(excelData) {
@@ -114,22 +99,11 @@ function readExcel(excelData) {
 
   fileType = "EXCEL";
 
-  const sheet = sheetLength.Sheets[sheetName];
+  const sheet = excel.Sheets[sheetLength[0]];
   DataGlobal = XLSX.utils.sheet_to_json(sheet, { raw: false });
 
-  console.log(`Hoja "${sheetName}" convertida a JSON:`, DataGlobal);
+  console.log(`Hoja "${sheetLength[0]}" convertida a JSON:`, DataGlobal);
 }
-
-/*
-  displayData(jsonData);
-  addColumnNamesToSelect(jsonData);
-
-
-visual.addEventListener("click", function () {
-  const selectedSheet = selectHoja.value; 
-  loadSheetData(selectedSheet, excel);
-});
-*/
 
 // de XML a JSON
 function readXML(xmlData) {
@@ -151,11 +125,6 @@ function readXML(xmlData) {
   );
 
   console.log("XML convertido a JSON:", DataGlobal);
-  /*
-  visual.addEventListener("click", function () {
-    displayData(jsonData);
-    addColumnNamesToSelect(jsonData);
-  });*/
 }
 
 function addColumnNamesToSelect(jsonData) {
@@ -181,20 +150,18 @@ function addColumnNamesToSelect(jsonData) {
   });
 }
 
-let sheetData = {};
-
 invio.addEventListener("click", function () {
   const chartType = document.getElementById("chartType").value; // Obtener el tipo de gráfico actual
-  if (!sheetData || !sheetData.jsonData || sheetData.jsonData.length === 0) {
+  if (!DataGlobal || !DataGlobal.jsonData || DataGlobal.length === 0) {
     alert("Seleziona un file válido prima di creare un grafico.");
     return;
   }
-  generateChart(sheetData.jsonData, chartType);
+  generateChart(DataGlobal, chartType);
 });
 
 visual.addEventListener("click", function () {
   if (DataGlobal.length === 0) {
-    alert("No hay datos cargados. Por favor, carga un archivo.");
+    alert("Non ci sono file caricati");
     return;
   }
 
@@ -245,8 +212,7 @@ function displayData(data) {
   output.appendChild(table);
 }
 
-// Función cambio color
-const colore = document.getElementById("colore");
+const colore = document.getElementById("colore").value;
 
 let chartInstance; // almacen del grafico
 
