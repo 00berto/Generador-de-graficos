@@ -150,15 +150,8 @@ function addColumnNamesToSelect(jsonData) {
   });
 }
 
-let sheetData = {};
-
 crea.addEventListener("click", function () {
   const chartType = document.getElementById("chartType").value; // Obtener el tipo de gráfico actual
-
-  /*if (!sheetData || !sheetData.jsonData || sheetData.jsonData.length === 0) {
-    alert("Seleziona un file válido prima di creare un grafico.");
-    return;
-  }*/
 
   generateChart(DataGlobal, chartType);
 });
@@ -216,7 +209,7 @@ function displayData(data) {
   output.appendChild(table);
 }
 
-const colore = document.getElementById("colore").value;
+const colore = document.getElementById("colore");
 
 let chartInstance; // almacen del grafico
 
@@ -274,12 +267,13 @@ function generateChart(data, type) {
 
 colore.addEventListener("change", UpdateColor);
 
-download.addEventListener("click", () => {
+download.addEventListener("click", function () {
   if (chartInstance) {
     const nomeGrafico = document.getElementById("nomeGrafico").value;
 
     const canvas = chartInstance.canvas;
-    const dataURL = canvas.toDataURL("image/png");
+    //const dataURL = canvas.toDataURL("image/png");
+    const dataURL = canvas.toDataURL();
     const link = document.createElement("a");
     link.href = dataURL;
     link.download = `${nomeGrafico}.png`;
