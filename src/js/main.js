@@ -1,6 +1,6 @@
 // Import CSS
 import "../scss/styles.scss";
-const invio = document.getElementById("creaGraf");
+const crea = document.getElementById("creaGraf");
 const visual = document.getElementById("cargaFile");
 const archivoXLSL = document.getElementById("file1");
 const progressBar = document.getElementById("progressBar");
@@ -150,12 +150,16 @@ function addColumnNamesToSelect(jsonData) {
   });
 }
 
-invio.addEventListener("click", function () {
+let sheetData = {};
+
+crea.addEventListener("click", function () {
   const chartType = document.getElementById("chartType").value; // Obtener el tipo de gráfico actual
-  if (!DataGlobal || !DataGlobal.jsonData || DataGlobal.length === 0) {
+
+  /*if (!sheetData || !sheetData.jsonData || sheetData.jsonData.length === 0) {
     alert("Seleziona un file válido prima di creare un grafico.");
     return;
-  }
+  }*/
+
   generateChart(DataGlobal, chartType);
 });
 
